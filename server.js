@@ -4,16 +4,14 @@ const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 const app = express();
+app.use(cors({origin: '*'}));
+const http = require('http').createServer(app)
 require("dotenv").config();
 
 
 //Set up the Express server
-app.use(
-  cors({
-    origin: "*",
-  })
-);
-app.listen(process.env.PORT, () => {
+
+http.listen(process.env.PORT, () => {
   console.log("App listening");
 });
 
@@ -43,11 +41,11 @@ app.get("/get-messages/:id", async function (req, res) {
 });
 
 //Set up the socket.io serevr
-const io = require("socket.io")(process.env.SOCKET_PORT, {
+const io = require("socket.io")(http, {
   cors: {
-    origin: "*",
-  },
-});
+    origin: '*',
+  }
+})
 //Runs on connection
 io.on("connection", (socket) => {
   //Receive the name of the chat currently in
@@ -60,7 +58,7 @@ io.on("connection", (socket) => {
   //Runs whenever a message is sent
   //@params roomname string and message string
 
-  socket.on("send-chat-message", (room, message, channel, account) => {
+  socket.on("send-chat-message", (room, message) => {
     //Format the message object
     console.log(createMessageId())
     const data = {
@@ -122,4 +120,3 @@ function createMessageId(){
     }
     return retVal;
 }
-//End of the server.js
