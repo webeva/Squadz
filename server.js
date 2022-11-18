@@ -39,7 +39,9 @@ app.get("/get-messages/:id", async function (req, res) {
     return {};
   }
 });
-
+app.get("*", (req, res)=>{
+  return res.send("server")
+})
 //Set up the socket.io serevr
 const io = require("socket.io")(http, {
   cors: {
