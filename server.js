@@ -4,7 +4,10 @@ const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 const app = express();
+const bodyParser = require('body-parser');
 app.use(cors({origin: '*'}));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 const http = require('http').createServer(app)
 require("dotenv").config();
 
@@ -23,6 +26,52 @@ const client = redis.createClient({
 client.on("error", (err) => {
   console.log("Error in setting up Redis client: " + err);
 });
+
+app.post("/create-new-user", async function (req, res){
+  const request = req.body
+  if (!client.isOpen) {
+    await client.connect();
+  }
+  try{
+    let users = JSON.parse(await client.get(`${process.env.DEV_VAR}${request.Type}user${request.UID}`));
+    if(users){
+      console.log("Already exist")
+      res.status(200).send(`User with that ${request.Type} account already exists!`)
+     
+    }else{
+      const response = await client.set(process.env.DEV_VAR + request.Type + "user" + request.UID, JSON.stringify(request))
+      res.status(200).send("New user created")
+    }
+  }catch(error){
+    console.log(error)
+    return 
+  }
+})
+
+app.post("/create-new-community", async function(req, res){
+
+})
+
+app.get("/join-new-community")
+
+app.get("/get-user-community/:id")
+app.get("/get-community/:id")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //REST Api to get all the messages for a chat in Redis
 app.get("/get-messages/:id", async function (req, res) {
@@ -62,7 +111,6 @@ io.on("connection", (socket) => {
 
   socket.on("send-chat-message", (room, message) => {
     //Format the message object
-    console.log(createMessageId())
     const data = {
       V: 2, //Version number (int)
       community_id: room, //Community id (string)
