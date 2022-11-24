@@ -47,15 +47,62 @@ app.post("/create-new-user", async function (req, res){
     return 
   }
 })
+app.get("/get-user-info/:id", async function(req, res){
+  if (!client.isOpen) {
+    await client.connect();
+  }
+  //Url paramater to get the chat
+  let id = req.params.id;
+  try {
+    //Return chat messages if they were found
+
+    return res.send(JSON.parse(await client.get(id)));
+  } catch (error) {
+    //Or else just return an empty object
+    return {};
+  }
+})
 
 app.post("/create-new-community", async function(req, res){
-
+  const request = req.body
+  if (!client.isOpen) {
+    await client.connect();
+  }
+  try{
+    const response = await client.set(process.env.DEV_VAR + "community" + request.UID, JSON.stringify(request))
+  }catch(error){
+    return {}
+  }
 })
 
 app.get("/join-new-community")
 
 app.get("/get-user-community/:id")
 app.get("/get-community/:id")
+
+app.get("/check-login/:id", async function(req,res){
+  if (!client.isOpen) {
+    await client.connect();
+  }
+  //Url paramater to get the chat
+  let id = req.params.id;
+  try {
+    //Return chat messages if they were found
+  
+    const response = JSON.parse(await client.get(id))
+    if(response){
+      res.status(200).send(true)
+      console.log("true")
+    }else{
+      res.status(200).send(false)
+      console.log("false")
+    }
+  } catch (error) {
+    //Or else just return an empty object
+    console.log("false")
+    res.status(200).send(false);
+  }
+})
 
 
 
