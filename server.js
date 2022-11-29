@@ -134,6 +134,23 @@ app.post("/create-new-community", async function (req, res) {
   }
 });
 
+app.post("/leave-community", async function(req, res){
+  if (!client.isOpen) {
+    await client.connect();
+  }
+  try{
+    const request = req.body;
+    const response = JSON.parse(await client.get(request.Id));
+    response["CommunityList"] = response.CommunityList.replace(`§${request.Chat}`, "")
+    const result = await client.set(request.Id, JSON.stringify(response));
+    res.status(200).send(result);
+
+  }catch(error){
+    console.log(error)
+    return
+  }
+})
+
 app.post("/join-new-community", async function (req, res) {
   if (!client.isOpen) {
     await client.connect();
@@ -142,6 +159,10 @@ app.post("/join-new-community", async function (req, res) {
     const request = req.body;
 
     const response = JSON.parse(await client.get(request.UID));
+    if(response.CommunityList.includes(request.Id)){
+      res.status(200).send("Cannot join community again!")
+      return
+    }
     response["CommunityList"] = response.CommunityList + `§${request.Id}`;
     const result = await client.set(request.UID, JSON.stringify(response));
     res.status(200).send(result);
