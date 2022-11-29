@@ -124,6 +124,7 @@ app.post("/create-new-community", async function (req, res) {
       request.UID,
       '[{"V":2,"community_id":"null","channel_id":"null","message_id":"TheOriginalMessage","sender_public_key":"null","message_type":"FIRST","images":null,"timestamp":1669563313457,"reply_id":null,"replies":null,"message":""}]'
     );
+    console.log(request)
     const response = await client.set(
       process.env.DEV_VAR + "community" + request.UID,
       JSON.stringify(request)
