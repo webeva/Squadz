@@ -299,6 +299,7 @@ async function sendPost(room, message, channel, image, user, name, profile, mess
         await client.connect();
       }
       let username = JSON.parse(await client.get("$@community" + room)).Deso;
+      
 
       const data2 = {
         community_id: room, //Community id (string)
