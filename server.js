@@ -124,7 +124,7 @@ app.post("/create-new-community", async function (req, res) {
       request.UID,
       '[{"V":2,"community_id":"null","channel_id":"null","message_id":"TheOriginalMessage","sender_public_key":"null","message_type":"FIRST","images":null,"timestamp":1669563313457,"reply_id":null,"replies":null,"message":""}]'
     );
-    console.log(request)
+    
     const response = await client.set(
       process.env.DEV_VAR + "community" + request.UID,
       JSON.stringify(request)
@@ -264,16 +264,14 @@ io.on("connection", (socket) => {
   //Runs whenever a message is sent
   //@params roomname string and message string
 
-  socket.on(
-    "send-chat-message",
-    (room, message, channel, image, user, name, profile) => {
+  socket.on("send-chat-message", (room, message, channel, image, user, name, profile) => {
       //Format the message object
-
+      let messageId =  createMessageId()
       const data = {
         V: 2, //Version number (int)
         community_id: room, //Community id (string)
         channel_id: channel, //Channel id (string)
-        message_id: createMessageId(), //Message id (string)
+        message_id: messageId, //Message id (string)
         sender_public_key: user, //User's public key (string)
         message_type: "POST", //Message type (string)
         images: image, //Images if any (array)
@@ -284,20 +282,39 @@ io.on("connection", (socket) => {
         Name: name,
         Profile: profile,
       };
+      
       //Save the message in our Redis cache database
       saveMessage(data, id);
       //Save the message in our DeSo database
-      axios
-        .post(
-          "https://97qtc0sfja.execute-api.us-east-1.amazonaws.com/default/SaharaMessageBot",
-          data
-        )
-        .then((response) => console.log(response.data));
+     
       //Broadcast the message to anybody connected to this room
       socket.broadcast.to(room).emit("chat-message", JSON.stringify(data));
+      sendPost(room, message, channel, image, user, name, profile, messageId)
+      
     }
   );
 });
+async function sendPost(room, message, channel, image, user, name, profile, messageId){
+      if (!client.isOpen) {
+        await client.connect();
+      }
+      let username = JSON.parse(await client.get("$@community" + room)).Deso;
+
+      const data2 = {
+        community_id: room, //Community id (string)
+        channel_id: channel, //Channel id (string)
+        message_id: messageId, //Message id (string)
+        sender_public_key: username, //User's public key (string)
+        message_type: "POST", //Message type (string)
+        images: JSON.stringify(image), //Images if any (array)
+        timestamp: JSON.stringify(Date.now()), //Curent timestamp (string)
+        reply_id: "null", //Reply id if any (string)
+        replies: "null", //Replies if any (array)
+        message: message, //Message (string)
+      }
+      const response = await axios.post("https://97qtc0sfja.execute-api.us-east-1.amazonaws.com/default/SaharaMessageBot",data2).then((response) => console.log("Hi" + response));
+      return response
+}
 //Function that saves the messages to our Redis cache database
 async function saveMessage(message, id) {
   //Check if the client is already open
