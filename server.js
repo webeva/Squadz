@@ -142,8 +142,14 @@ app.post("/leave-community", async function(req, res){
   try{
     const request = req.body;
     const response = JSON.parse(await client.get(request.Id));
+    const responsetwo = JSON.parse(await client.get(`$@community${request.Chat}`))
     response["CommunityList"] = response.CommunityList.replace(`§${request.Chat}`, "")
+    let desokey = "§" + request.Id.replace("$@DeSouser","")
+    
+    responsetwo["Users"] = responsetwo.Users.replace(desokey, "")
+    
     const result = await client.set(request.Id, JSON.stringify(response));
+    const resultwo = await client.set(`$@community${request.Chat}`, JSON.stringify(responsetwo))
     res.status(200).send(result);
 
   }catch(error){
@@ -160,12 +166,16 @@ app.post("/join-new-community", async function (req, res) {
     const request = req.body;
 
     const response = JSON.parse(await client.get(request.UID));
+    const responsetwo = JSON.parse(await client.get(`$@community${request.Id}`))
     if(response.CommunityList.includes(request.Id)){
       res.status(200).send("Cannot join community again!")
       return
     }
     response["CommunityList"] = response.CommunityList + `§${request.Id}`;
+    let newUser = request.UID.replace("$@DeSouser", "")
+    responsetwo["Users"] = responsetwo.Users + `§${newUser}`
     const result = await client.set(request.UID, JSON.stringify(response));
+    const resulttwo = await client.set(`$@community${request.Id}`, JSON.stringify(responsetwo))
     res.status(200).send(result);
   } catch (error) {
     console.log(error);
